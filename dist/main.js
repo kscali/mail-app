@@ -86,14 +86,69 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./src/compose.js":
+/*!************************!*\
+  !*** ./src/compose.js ***!
+  \************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("let MessageStore = __webpack_require__(/*! ./message_store */ \"./src/message_store.js\");\n\nconst Compose = {\n  render() {\n    let div = document.createElement(\"div\");\n    div.classList.add(\"new-message\");\n    div.innerHTML = this.renderForm(); \n\n    div.addEventListener(\"change\", (e) => {\n      let target = e.currentTarget; \n      MessageStore.updateDraftField(target.name, target.value);\n    })\n    div.addEventListener(\"submit\", (e) => {\n      e.preventDefault();\n      MessageStore.sendDraft();\n      location.hash = \"inbox\";\n    })\n    return div; \n  },\n  renderForm() {\n    let draft = MessageStore.getMessageDraft(); \n    return `<p class=\"new-message-header\">New Message</p>\n    <form class=\"compose-form\">\n      <label>From: </label>\n      <input placholder='From' name='from' type='text' value=${draft.from}>  \n\n      <label>To: </label>\n      <input placholder='Recipient' name='to' type='text' value=${draft.to}>\n      <label>Subject</label>\n      <input placholder='Subject' name='subject' type='text' value=${draft.subject}>\n\n      <label>Message</label>\n      <textarea name='body' rows='20'>${draft.body}</textarea>\n      <button type='submit' class='btn btn-primary submit-message'>Send</button>\n    </form>\n    `\n  }\n\n}\n\nmodule.exports = Compose;\n\n//# sourceURL=webpack:///./src/compose.js?");
+
+/***/ }),
+
+/***/ "./src/inbox.js":
+/*!**********************!*\
+  !*** ./src/inbox.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("// import { unlink } from \"fs\";\nlet MessageStore = __webpack_require__(/*! ./message_store */ \"./src/message_store.js\")\n\nconst Inbox = {\n\n  renderMessage(message) {\n    let li = document.createElement('li');\n    li.classList.add(\"message\");\n    li.innerHTML = `<span class=\"from\">${message.from}</span>\n    <span class=\"subject\">${message.subject}</span>\n    <span class=\"body\">${message.body}</span>`;\n    return li; \n  },\n\n  render() {\n    let container = document.createElement(\"ul\");\n    let messages = MessageStore.getInboxMessages();\n    messages.forEach(message => { \n      let node = this.renderMessage(message);\n      container.appendChild(node);\n    })\n     container.classList.add(\"messages\");\n    \n    return container; \n   }\n\n \n}\n\nmodule.exports = Inbox; \n\n\n//# sourceURL=webpack:///./src/inbox.js?");
+
+/***/ }),
+
 /***/ "./src/index.js":
 /*!**********************!*\
   !*** ./src/index.js ***!
   \**********************/
 /*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("const Router = __webpack_require__(/*! ./router */ \"./src/router.js\");\nconst Inbox = __webpack_require__(/*! ./inbox */ \"./src/inbox.js\");\nconst Sent = __webpack_require__(/*! ./sent */ \"./src/sent.js\");\nconst Compose = __webpack_require__(/*! ./compose */ \"./src/compose.js\");\n\nlet routes = {\n  inbox: Inbox,\n  sent: Sent,\n  compose: Compose\n};\n\ndocument.addEventListener(\"DOMContentLoaded\", () => {\n  \n  let node = document.querySelector('.content');\n  let router = new Router(node, routes);\n  router.start(); \n  window.location.hash = '#inbox';\n  \n  let lis = document.getElementsByTagName('li');\n  lis = Array.from(lis);\n  \n  lis.forEach(li => {\n    li.addEventListener(\"click\", () => {\n      let location = li.innerText.toLowerCase();\n       window.location.hash = location; \n    })\n  })\n})\n\n\n//# sourceURL=webpack:///./src/index.js?");
+
+/***/ }),
+
+/***/ "./src/message_store.js":
+/*!******************************!*\
+  !*** ./src/message_store.js ***!
+  \******************************/
+/*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("console.log(\"It's working\")\n\n//# sourceURL=webpack:///./src/index.js?");
+eval("let messages = JSON.parse(localStorage.getItem(\"messages\"));\n\nif (!messages) {\n  messages = {\n    sent: [\n      { to: \"friend@mail.com\", subject: \"Check this out\", body: \"It's so cool\" },\n      { to: \"person@mail.com\", subject: \"zzz\", body: \"so booring\" }\n    ],\n    inbox: [\n      {\n        from: \"grandma@mail.com\", subject: \"Fwd: Fwd: Fwd: Check this out\",\n        body: \"Stay at home mom discovers cure for leg cramps. Doctors hate her\"\n      },\n      { from: \"person@mail.com\", subject: \"Questionnaire\", body: \"Take this free quiz win $1000 dollars\" }\n    ]\n  };\n}\n\nconst MessageStore = { \n  getInboxMessages: () => messages.inbox.slice(),\n  getSentMessages: () => messages.sent.slice(),\n  getMessageDraft: () => messageDraft,\n  updateDraftField: (field, value) => messageDraft[field] = value,\n  sendDraft: () => {\n    messages.sent.push(messageDraft);\n    messageDraft = new Message();\n    localStorage.setItem(\"messages\", JSON.stringify(messages))\n  }\n };\n\n class Message {\n  constructor(from, to, subject, body) {\n    this.from = from;\n    this.to = to; \n    this.subject = subject;\n    this.body = body;\n  }\n\n }\nlet messageDraft = new Message();\n module.exports = MessageStore; \n\n//# sourceURL=webpack:///./src/message_store.js?");
+
+/***/ }),
+
+/***/ "./src/router.js":
+/*!***********************!*\
+  !*** ./src/router.js ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("class Router {\n  constructor(node, routes) {\n    this.node = node; \n    this.routes = routes \n  }\n\n  start() {\n    this.render(); \n    window.addEventListener(\"hashchange\", () => {\n      this.render(); \n    })\n  }\n\n  activeRoute() {\n    let fragment = window.location.hash.substr(1);\n    let component = this.routes[fragment]; \n    return component; \n  }\n\n  render() {\n    this.node.innerHTML = \"\";\n    let component = this.activeRoute(); \n    if (component) {\n      this.node.appendChild(component.render());\n    }\n    \n  }\n}\n\nmodule.exports = Router; \n\n//# sourceURL=webpack:///./src/router.js?");
+
+/***/ }),
+
+/***/ "./src/sent.js":
+/*!*********************!*\
+  !*** ./src/sent.js ***!
+  \*********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("\nlet MessageStore = __webpack_require__(/*! ./message_store */ \"./src/message_store.js\")\n\nconst Sent = {\n\n  renderMessage(message) {\n    let li = document.createElement('li');\n    li.classList.add(\"message\");\n    li.innerHTML = `<span class=\"to\">${message.to}</span>\n    <span class=\"subject\">${message.subject}</span>\n    <span class=\"body\">${message.body}</span>`;\n    return li;\n  },\n\n  render() {\n    let container = document.createElement(\"ul\");\n    let messages = MessageStore.getSentMessages();\n    messages.forEach(message => {\n      let node = this.renderMessage(message);\n      container.appendChild(node);\n    })\n    container.classList.add(\"messages\");\n\n    return container;\n  }\n\n\n}\n\nmodule.exports = Sent; \n\n\n//# sourceURL=webpack:///./src/sent.js?");
 
 /***/ })
 
